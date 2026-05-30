@@ -79,6 +79,24 @@ Several of our first-hand rules were later **independently corroborated** by tha
 art and by python-openxml/opc-diag (the OPC package-diff approach) — corroboration, not
 origin.
 
+## Block layouts & markdown (experimental)
+
+Beyond the Marp/DOM path, a semantic **block IR** renders decks through layout
+*templates* that anchor titles and place content in aligned regions/grids — the
+"everything lines up" look — instead of vertically-centered flow. Author it as
+JSON blocks, or straight from markdown:
+
+```ts
+import { markdownToPptx } from 'marp-native-pptx/blocks'
+await markdownToPptx(md, 'deck.pptx')
+//  ---  separates slides;  <!-- layout: title|content|two-column -->  picks a template
+```
+
+Both the Marp/DOM path and the block path feed the **same `emit` + validator**, so
+the output is PowerPoint-clean either way. Templates today: `title`, `content`,
+`two-column` (each draws an accent rule under headings via the native `shape`
+primitive). No browser is involved on the block path.
+
 ## Honest limitations
 - **Editable ≠ pixel-identical.** PowerPoint reflows text with its own engine, so a
   nearly-full line may wrap slightly differently than in Chrome. We eliminate

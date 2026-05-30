@@ -118,7 +118,12 @@ function stack(blocks: Block[], x: number, y0: number, w: number, theme: Theme):
         valign: 'top',
         paras: [paragraph(toRuns(b.text, theme, pt, theme.ink).map((r) => ({ ...r, style: { ...r.style, bold: true } })), 'left', pt * 0.75 * 1.15)],
       })
-      y += h + 14
+      y += h + 6
+      // accent rule under the heading (consistent design element, like the
+      // colored underline in polished templates)
+      const ruleH = b.level === 1 ? 6 : 4
+      boxes.push({ kind: 'shape', rect: { xPx: x, yPx: y, wPx: b.level === 1 ? 90 : 60, hPx: ruleH }, fill: theme.accent })
+      y += ruleH + 16
     } else if (b.type === 'kicker') {
       const h = estimateHeight(b.text, SIZE.kicker, w) + 4
       boxes.push({

@@ -29,10 +29,13 @@ export interface TableCell {
   header: boolean      // <th> vs <td>
 }
 
+export interface LineSpec { color: string; widthPt: number }
+
 export type LayoutBox =
   | { kind: 'text'; rect: Rect; paras: Paragraph[]; valign: 'top' | 'middle' | 'bottom' }
   | { kind: 'image'; rect: Rect; src: string }
   | { kind: 'table'; rect: Rect; rows: TableCell[][]; colWidthsPx: number[] }
+  | { kind: 'shape'; rect: Rect; fill?: string; line?: LineSpec; radiusPx?: number }
 
 export interface SlideLayout { sizePx: { w: number; h: number }; boxes: LayoutBox[]; background?: { fill?: string; imageDataUri?: string } }
 
@@ -71,7 +74,14 @@ export interface PptxTable {
   rows: PptxTableCell[][]
   colWidthsIn: number[]
 }
-export type PptxShape = PptxTextBox | PptxImage | PptxTable
+export interface PptxRect {
+  kind: 'shape'
+  xIn: number; yIn: number; wIn: number; hIn: number
+  fill?: string
+  line?: LineSpec
+  radiusIn?: number
+}
+export type PptxShape = PptxTextBox | PptxImage | PptxTable | PptxRect
 export interface PptxSlide { shapes: PptxShape[]; background?: { fill?: string; imageDataUri?: string } }
 export interface PptxModel { slideWidthIn: number; slideHeightIn: number; slides: PptxSlide[] }
 

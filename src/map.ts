@@ -43,6 +43,15 @@ function mapBox(b: LayoutBox, s: { x: number; y: number }): PptxShape {
     hIn: pxToInch(b.rect.hPx, s.y),
   }
   if (b.kind === 'image') return { kind: 'image', ...geom, src: b.src }
+  if (b.kind === 'shape') {
+    return {
+      kind: 'shape',
+      ...geom,
+      fill: b.fill,
+      line: b.line,
+      radiusIn: b.radiusPx != null ? pxToInch(b.radiusPx, s.x) : undefined,
+    }
+  }
   if (b.kind === 'table') {
     return {
       kind: 'table',

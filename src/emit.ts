@@ -182,6 +182,16 @@ export async function emit(model: PptxModel, outPath: string): Promise<void> {
     if (slide.background?.fill) s.background = { color: slide.background.fill }
     else if (slide.background?.imageDataUri) s.background = { data: slide.background.imageDataUri }
     for (const shape of slide.shapes) {
+      if (shape.kind === 'shape') {
+        const prst = shape.radiusIn && shape.radiusIn > 0 ? 'roundRect' : 'rect'
+        s.addShape(prst, {
+          x: shape.xIn, y: shape.yIn, w: shape.wIn, h: shape.hIn,
+          fill: shape.fill ? { color: shape.fill } : { type: 'none' },
+          line: shape.line ? { color: shape.line.color, width: shape.line.widthPt } : { type: 'none' },
+          ...(shape.radiusIn ? { rectRadius: shape.radiusIn } : {}),
+        })
+        continue
+      }
       if (shape.kind === 'image') {
         const geom = { x: shape.xIn, y: shape.yIn, w: shape.wIn, h: shape.hIn }
         if (shape.src.startsWith('data:')) {

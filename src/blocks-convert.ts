@@ -5,6 +5,7 @@
 import { mapToPptx } from './map.js'
 import { emit } from './emit.js'
 import { layoutDeck, type Deck } from './blocks.js'
+import { markdownToDeck } from './md-blocks.js'
 
 export async function blocksToPptx(deck: Deck, outPath: string): Promise<void> {
   const slides = layoutDeck(deck)
@@ -12,5 +13,11 @@ export async function blocksToPptx(deck: Deck, outPath: string): Promise<void> {
   await emit(model, outPath)
 }
 
+/** Markdown → block IR → editable .pptx (reuses the same clean emit pipeline). */
+export async function markdownToPptx(md: string, outPath: string): Promise<void> {
+  await blocksToPptx(markdownToDeck(md), outPath)
+}
+
 export { layoutDeck } from './blocks.js'
+export { markdownToDeck } from './md-blocks.js'
 export type { Deck, Slide, Block, InlineRun, Theme, LayoutKind } from './blocks.js'

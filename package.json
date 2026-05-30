@@ -4,8 +4,14 @@
   "description": "Native Marp -> editable PowerPoint generator. Reads the rendered DOM and emits native pptx shapes (no PDF/LibreOffice round-trip, no text fragmentation).",
   "type": "module",
   "license": "MIT",
-  "engines": { "node": ">=18" },
-  "files": ["dist", "LICENSE", "README.md"],
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
   "bin": {
     "marp-native-pptx": "./dist/cli.js",
     "marp-native-pptx-validate": "./dist/validate-cli.js"
@@ -28,7 +34,9 @@
     "fast-xml-parser": "^4.4.0",
     "jszip": "^3.10.0",
     "pptxgenjs": "^3.12.0",
-    "puppeteer-core": "^23.0.0"
+    "puppeteer-core": "^23.0.0",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.5"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

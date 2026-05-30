@@ -1,4 +1,7 @@
-# marp-native-pptx
+# Marpoint
+
+> **Native Marp → editable PowerPoint** — no LibreOffice, no fragmentation.
+> npm package: [`marp-native-pptx`](https://www.npmjs.com/package/marp-native-pptx)
 
 Native Marp → **editable** PowerPoint generator. Renders your deck with the same
 engine Marp uses (`@marp-team/marp-core`), reads the rendered layout in headless

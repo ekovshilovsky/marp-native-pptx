@@ -97,14 +97,22 @@ the output is PowerPoint-clean either way. No browser is involved on the block p
 
 ### Layout templates
 
-`title`, `content`, `two-column`, `section` (full-bleed accent divider), `grid`
-(icon-dot feature grid), `metrics` (big-number stat cards), `timeline`
-(horizontal axis with alternating event labels), `steps` (numbered process),
-and `quote`. Each is built from a small **auto-layout engine** (`layout-engine.ts`:
-uniform grids, even distribution, and shrink-to-fit text sizing) so content stays
-aligned and never overflows its region — the same fit/scale behavior whether a
-template is built-in, hand-authored, or generated. Everything is a native,
-editable shape (no images).
+`title` (optional hero image), `content`, `two-column`, `image-feature` (image
+beside copy), `section` (full-bleed accent divider), `grid` (icon-chip feature
+grid), `metrics` (big-number stat cards), `timeline` (horizontal axis with
+alternating event labels), `steps` (numbered process), and `quote`. Each is
+built from a small **auto-layout engine** (`layout-engine.ts`: uniform grids,
+even distribution, and shrink-to-fit text sizing) so content stays aligned and
+never overflows its region — the same fit/scale behavior whether a template is
+built-in, hand-authored, or generated. Text and chrome are native editable
+shapes; `image` blocks (icons, photos, illustrations) embed as real images —
+only the genuinely-raster parts are raster, never the text.
+
+Layout correctness is locked by a **geometry contract** test
+(`test/layout-geometry.test.ts`): it asserts on the computed px geometry — the
+deterministic source of truth that becomes the OOXML — that every box stays
+on-canvas, step numbers sit concentric in their circles, and titles never
+overlap their subtitles. Pixel-precise, no flaky image diffing.
 
 ### Themes
 

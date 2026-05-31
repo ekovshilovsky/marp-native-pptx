@@ -13,12 +13,14 @@
 import type { SlideLayout } from './types.js'
 import { layoutDeck, type Block, type LayoutKind, type Slide } from './blocks.js'
 import { themeList, type ThemePreset } from './themes.js'
+import { ICON_KEYS, type ShowcaseAssets } from './showcase-assets.js'
 
 export const LAYOUT_ORDER: LayoutKind[] = [
   'title',
   'section',
   'content',
   'two-column',
+  'image-feature',
   'grid',
   'metrics',
   'timeline',
@@ -26,9 +28,18 @@ export const LAYOUT_ORDER: LayoutKind[] = [
   'quote',
 ]
 
+// On a light theme the icon chips are light tints (use the dark icon variant);
+// on a dark theme they are dark tints (use the light variant).
+const variantFor = (t: ThemePreset): 'dark' | 'light' =>
+  parseInt(t.bg.slice(0, 2), 16) * 0.299 + parseInt(t.bg.slice(2, 4), 16) * 0.587 + parseInt(t.bg.slice(4, 6), 16) * 0.114 > 150 ? 'dark' : 'light'
+
 // Build the block content for one layout, badged with `badge` (e.g. the theme
-// name + layout) so each slide is self-identifying in a review.
-function content(layout: LayoutKind, badge: string): Slide {
+// name + layout) so each slide is self-identifying in a review. When `assets`
+// are supplied, image-bearing layouts get real icons / illustration.
+function content(layout: LayoutKind, badge: string, t: ThemePreset, assets?: ShowcaseAssets): Slide {
+  const v = variantFor(t)
+  const robot = assets?.robot[v]
+  const icon = (i: number): string | undefined => assets?.icons[v][ICON_KEYS[i % ICON_KEYS.length]]
   switch (layout) {
     case 'title':
       return {
@@ -37,6 +48,20 @@ function content(layout: LayoutKind, badge: string): Slide {
           { type: 'kicker', text: badge },
           { type: 'heading', level: 1, text: 'Meet Pixel the Robot' },
           { type: 'paragraph', text: 'Your friendly companion for the connected home.' },
+          ...(robot ? [{ type: 'image', src: robot } as Block] : []),
+        ],
+      }
+    case 'image-feature':
+      return {
+        layout,
+        blocks: [
+          { type: 'kicker', text: badge },
+          { type: 'heading', level: 1, text: 'Say hello to Pixel' },
+          {
+            type: 'bullets',
+            items: ['Wakes on your voice', 'Learns your routines', 'Looks after the home'],
+          },
+          ...(robot ? [{ type: 'image', src: robot } as Block] : []),
         ],
       }
     case 'section':
@@ -84,18 +109,18 @@ function content(layout: LayoutKind, badge: string): Slide {
         ],
       }
     case 'grid': {
-      const feat = (label: string, desc: string): Block => ({ type: 'feature', label, desc })
+      const feat = (i: number, label: string, desc: string): Block => ({ type: 'feature', label, desc, icon: icon(i) })
       return {
         layout,
         blocks: [
           { type: 'heading', level: 1, text: 'Built-in skills' },
           { type: 'paragraph', text: badge },
-          feat('Voice', 'Natural back-and-forth conversation.'),
-          feat('Vision', 'Recognizes faces and gestures.'),
-          feat('Routines', 'Automates your mornings.'),
-          feat('Security', 'Watches the door while you are out.'),
-          feat('Music', 'Room-filling adaptive sound.'),
-          feat('Updates', 'Gets smarter every week.'),
+          feat(0, 'Voice', 'Natural back-and-forth conversation.'),
+          feat(1, 'Vision', 'Recognizes faces and gestures.'),
+          feat(2, 'Routines', 'Automates your mornings.'),
+          feat(3, 'Security', 'Watches the door while you are out.'),
+          feat(4, 'Music', 'Room-filling adaptive sound.'),
+          feat(5, 'Updates', 'Gets smarter every week.'),
         ],
       }
     }
@@ -162,23 +187,23 @@ const badgeFor = (t: ThemePreset, layout: LayoutKind): string => `${t.name} · $
  * Across the 12 presets this covers every layout and every theme, in ~36
  * slides — compact enough to scroll through and audit by eye.
  */
-export function buildGallery(perTheme = 3): SlideLayout[] {
+export function buildGallery(assets?: ShowcaseAssets, perTheme = 4): SlideLayout[] {
   const out: SlideLayout[] = []
   themeList().forEach((t, ti) => {
     const layouts = Array.from(
       { length: perTheme },
       (_, k) => LAYOUT_ORDER[(ti * perTheme + k) % LAYOUT_ORDER.length],
     )
-    out.push(...layoutDeck({ theme: t, slides: layouts.map((l) => content(l, badgeFor(t, l))) }))
+    out.push(...layoutDeck({ theme: t, slides: layouts.map((l) => content(l, badgeFor(t, l), t, assets)) }))
   })
   return out
 }
 
 /** Exhaustive layout × theme matrix (every combination), grouped by theme. */
-export function buildMatrix(): SlideLayout[] {
+export function buildMatrix(assets?: ShowcaseAssets): SlideLayout[] {
   const out: SlideLayout[] = []
   themeList().forEach((t) => {
-    out.push(...layoutDeck({ theme: t, slides: LAYOUT_ORDER.map((l) => content(l, badgeFor(t, l))) }))
+    out.push(...layoutDeck({ theme: t, slides: LAYOUT_ORDER.map((l) => content(l, badgeFor(t, l), t, assets)) }))
   })
   return out
 }

@@ -9,11 +9,14 @@ import { mapToPptx } from '../src/map.js'
 import { emit } from '../src/emit.js'
 import { validatePptx } from '../src/validate.js'
 import { buildGallery, buildMatrix, LAYOUT_ORDER } from '../src/showcase-deck.js'
+import { bakeShowcaseAssets } from '../src/showcase-assets.js'
 import { themeList } from '../src/themes.js'
 
 async function main() {
   const matrix = process.argv.includes('--matrix')
-  const slides = matrix ? buildMatrix() : buildGallery()
+  console.log('baking icon + illustration assets...')
+  const assets = await bakeShowcaseAssets()
+  const slides = matrix ? buildMatrix(assets) : buildGallery(assets)
   const out = matrix ? 'showcase-matrix.pptx' : 'showcase.pptx'
 
   const model = mapToPptx(slides, 13.333, 7.5)

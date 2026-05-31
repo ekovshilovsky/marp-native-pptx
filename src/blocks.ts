@@ -29,7 +29,7 @@ export type Block =
   | { type: 'paragraph'; text: Inline }
   | { type: 'bullets'; items: Inline[] }
   | { type: 'image'; src: string }
-  | { type: 'feature'; color?: string; label: Inline; desc?: Inline } // icon-dot + label + description (also a numbered step)
+  | { type: 'feature'; color?: string; label: Inline; desc?: Inline; icon?: string } // icon-chip + label + desc (also a numbered step); icon is an image src/data-URI
   | { type: 'event'; date: string; text: Inline } // a timeline event
   | { type: 'stat'; value: string; label: Inline } // a big-number metric
   | { type: 'quote'; text: Inline; cite?: string } // a pull quote + attribution
@@ -44,6 +44,7 @@ export type LayoutKind =
   | 'metrics'
   | 'quote'
   | 'steps'
+  | 'image-feature'
 
 export interface Slide {
   layout: LayoutKind
@@ -235,8 +236,37 @@ export function layoutDeck(deck: Deck): SlideLayout[] {
     let bgFill = theme.bg // section overrides this with a full-bleed accent
     if (slide.layout === 'title') {
       // Left-anchored title block (kicker / big title / description), like a
-      // polished cover slide — all left-aligned at a fixed left margin.
-      boxes.push(...stack(slide.blocks ?? [], M, 230, W - 2 * M, theme))
+      // polished cover slide. If a hero image is supplied it fills the right
+      // side and the text takes the left column; otherwise text spans wide.
+      const allBlocks = slide.blocks ?? []
+      const hero = allBlocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')
+      const textBlocks = allBlocks.filter((b) => b.type !== 'image')
+      if (hero) {
+        const heroW = 460
+        const heroX = W - heroW
+        boxes.push({ kind: 'shape', rect: { xPx: heroX, yPx: 0, wPx: heroW, hPx: H }, fill: theme.surface })
+        const pad = 70
+        boxes.push({ kind: 'image', rect: { xPx: heroX + pad, yPx: (H - (heroW - 2 * pad)) / 2, wPx: heroW - 2 * pad, hPx: heroW - 2 * pad }, src: hero.src })
+        boxes.push(...stack(textBlocks, M, 240, heroX - M - 60, theme))
+      } else {
+        boxes.push(...stack(textBlocks, M, 230, W - 2 * M, theme))
+      }
+    } else if (slide.layout === 'image-feature') {
+      // A large image on one side, heading + supporting copy on the other.
+      // Direction alternates via an optional leading kicker text "left"/"right"
+      // is not needed — image sits right by default, which reads naturally.
+      const allBlocks = slide.blocks ?? []
+      const img = allBlocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')
+      const textBlocks = allBlocks.filter((b) => b.type !== 'image')
+      const imgW = 520
+      const imgX = W - imgW - M
+      if (img) {
+        boxes.push({ kind: 'shape', preset: 'roundRect', radiusPx: 22, rect: { xPx: imgX, yPx: 150, wPx: imgW, hPx: H - 300 }, fill: theme.surface })
+        const pad = 56
+        const side = H - 300 - 2 * pad
+        boxes.push({ kind: 'image', rect: { xPx: imgX + (imgW - side) / 2, yPx: 150 + pad, wPx: side, hPx: side }, src: img.src })
+      }
+      boxes.push(...stack(textBlocks, M, TITLE_TOP + 80, imgX - M - 60, theme))
     } else if (slide.layout === 'two-column') {
       const cols = slide.columns ?? []
       const colW = (W - 2 * M - 60) / 2
@@ -260,25 +290,44 @@ export function layoutDeck(deck: Deck): SlideLayout[] {
       const palette = theme.palette
       const cols = feats.length <= 4 ? 2 : 3
       const rows = Math.max(1, Math.ceil(feats.length / cols))
-      const gridTop = Math.max(head.endY + 36, 230)
-      const cells = gridCells(box(M, gridTop, W - 2 * M, H - gridTop - M), rows, cols, 50, 24)
-      const dot = 46
-      const labelRegion = 46 // fixed top region per cell so rows align
+      // Vertically center the grid block in the region below the header so it
+      // fills the slide instead of clustering at the top.
+      const regionTop = Math.max(head.endY + 30, 220)
+      const regionH = H - M - regionTop
+      const rowH = 150
+      const gapY = Math.max(20, (regionH - rows * rowH) / Math.max(1, rows))
+      const totalH = rows * rowH + (rows - 1) * gapY
+      const startY = regionTop + Math.max(0, (regionH - totalH) / 2)
+      const colGap = 50
+      const colW = (W - 2 * M - colGap * (cols - 1)) / cols
+      const chip = 56
+      const labelRegion = 40
       feats.forEach((f, i) => {
-        const cell = cells[i]
-        boxes.push({ kind: 'shape', preset: 'ellipse', rect: { xPx: cell.x, yPx: cell.y, wPx: dot, hPx: dot }, fill: f.color ?? palette[i % palette.length] })
-        const tx = cell.x + dot + 16
-        const tw = cell.w - dot - 16
+        const c = i % cols
+        const r = Math.floor(i / cols)
+        const cx = M + c * (colW + colGap)
+        const cy = startY + r * (rowH + gapY)
+        const color = f.color ?? palette[i % palette.length]
+        if (f.icon) {
+          // tinted rounded chip with the icon image centered on it
+          boxes.push({ kind: 'shape', preset: 'roundRect', radiusPx: 14, rect: { xPx: cx, yPx: cy, wPx: chip, hPx: chip }, fill: mix(color, theme.bg, 0.82) })
+          const ip = 12
+          boxes.push({ kind: 'image', rect: { xPx: cx + ip, yPx: cy + ip, wPx: chip - 2 * ip, hPx: chip - 2 * ip }, src: f.icon })
+        } else {
+          boxes.push({ kind: 'shape', preset: 'ellipse', rect: { xPx: cx, yPx: cy, wPx: chip, hPx: chip }, fill: color })
+        }
+        const tx = cx + chip + 18
+        const tw = colW - chip - 18
         const labelPt = fitFontPt(inlineText(f.label), tw, labelRegion, 18, 12)
         boxes.push({
           kind: 'text',
-          rect: { xPx: tx, yPx: cell.y - 2, wPx: tw, hPx: labelRegion },
+          rect: { xPx: tx, yPx: cy - 2, wPx: tw, hPx: labelRegion },
           valign: 'top',
           paras: [paragraph(toRuns(f.label, theme, labelPt, theme.ink).map((r) => ({ ...r, style: { ...r.style, bold: true } })), 'left', labelPt * 0.75 * 1.1)],
         })
         if (f.desc) {
-          const dy = cell.y - 2 + labelRegion
-          const dh = cell.y + cell.h - dy - 6
+          const dy = cy - 2 + labelRegion
+          const dh = rowH - labelRegion - 4
           const descPt = fitFontPt(inlineText(f.desc), tw, dh, 15, 10)
           boxes.push({
             kind: 'text',
@@ -444,9 +493,11 @@ export function layoutDeck(deck: Deck): SlideLayout[] {
           boxes.push({ kind: 'shape', preset: 'ellipse', rect: { xPx: cx - node / 2, yPx: railY - node / 2, wPx: node, hPx: node }, fill: c })
           boxes.push({
             kind: 'text',
+            // line spacing >= font size + valign middle centers the single glyph
+            // in the circle (a tighter spacing biases the glyph upward).
             rect: { xPx: cx - node / 2, yPx: railY - node / 2, wPx: node, hPx: node },
             valign: 'middle',
-            paras: [paragraph(toRuns(String(i + 1), theme, 24, readableOn(c)).map((r) => ({ ...r, style: { ...r.style, bold: true } })), 'center', 24 * 0.75)],
+            paras: [paragraph(toRuns(String(i + 1), theme, 22, readableOn(c)).map((r) => ({ ...r, style: { ...r.style, bold: true } })), 'center', 22)],
           })
           const lx = cx - colW / 2
           const ly = railY + node / 2 + 18

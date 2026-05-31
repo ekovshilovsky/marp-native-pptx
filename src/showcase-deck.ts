@@ -26,6 +26,11 @@ export const LAYOUT_ORDER: LayoutKind[] = [
   'timeline',
   'steps',
   'quote',
+  'bento',
+  'comparison',
+  'chart',
+  'stat-hero',
+  'closing',
 ]
 
 // On a light theme the icon chips are light tints (use the dark icon variant);
@@ -175,6 +180,67 @@ function content(layout: LayoutKind, badge: string, t: ThemePreset, assets?: Sho
             text: 'Pixel feels less like a gadget and more like a member of the family.',
             cite: `Early beta tester · ${badge}`,
           },
+        ],
+      }
+    case 'bento': {
+      const feat = (i: number, label: string, desc: string): Block => ({ type: 'feature', label, desc, icon: icon(i) })
+      return {
+        layout,
+        blocks: [
+          { type: 'heading', level: 1, text: 'Why people love Pixel' },
+          { type: 'paragraph', text: badge },
+          feat(0, 'Always listening, never creepy', 'On-device wake word, so audio never leaves your home until you ask.'),
+          feat(1, 'Sees', 'Recognizes faces and gestures.'),
+          feat(2, 'Learns', 'Adapts to your routines.'),
+          feat(3, 'Guards the home while you are away', 'Watches the door and pings your phone.'),
+        ],
+      }
+    }
+    case 'comparison':
+      return {
+        layout,
+        blocks: [{ type: 'heading', level: 1, text: 'Pixel vs. the old way' }, { type: 'paragraph', text: badge }],
+        columns: [
+          [
+            { type: 'heading', level: 2, text: 'Before Pixel' },
+            { type: 'bullets', items: ['Five different apps', 'Cloud-only, always online', 'Forgets your preferences', 'Setup takes an afternoon'] },
+          ],
+          [
+            { type: 'heading', level: 2, text: 'With Pixel' },
+            { type: 'bullets', items: ['One voice for everything', 'Works offline, on-device', 'Learns and remembers', 'Set up in three minutes'] },
+          ],
+        ],
+      }
+    case 'chart': {
+      const bar = (label: string, value: number): Block => ({ type: 'bar', label, value })
+      return {
+        layout,
+        blocks: [
+          { type: 'heading', level: 1, text: 'Homes served per quarter' },
+          { type: 'paragraph', text: badge },
+          bar('Q1', 120),
+          bar('Q2', 280),
+          bar('Q3', 540),
+          bar('Q4', 910),
+        ],
+      }
+    }
+    case 'stat-hero':
+      return {
+        layout,
+        blocks: [
+          { type: 'kicker', text: badge },
+          { type: 'stat', value: '1,000,000+', label: 'homes now wake up with Pixel' },
+          { type: 'paragraph', text: 'From a single prototype to a million households in under a year.' },
+        ],
+      }
+    case 'closing':
+      return {
+        layout,
+        blocks: [
+          { type: 'heading', level: 1, text: 'Say hi to Pixel' },
+          { type: 'paragraph', text: badge },
+          { type: 'bullets', items: ['hello@pixel.example', 'pixel.example/preorder'] },
         ],
       }
   }

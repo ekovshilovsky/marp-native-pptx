@@ -100,8 +100,11 @@ the output is PowerPoint-clean either way. No browser is involved on the block p
 `title` (optional hero image), `content`, `two-column`, `image-feature` (image
 beside copy), `section` (full-bleed accent divider), `grid` (icon-chip feature
 grid), `metrics` (big-number stat cards), `timeline` (horizontal axis with
-alternating event labels), `steps` (numbered process), and `quote`. Each is
-built from a small **auto-layout engine** (`layout-engine.ts`: uniform grids,
+alternating event labels), `steps` (numbered process), `quote`, `bento`
+(mixed-size tile mosaic), `comparison` (side-by-side cards), `chart` (native bar
+chart — bars from shapes, never an image), `stat-hero` (one giant statistic),
+and `closing` (sign-off / CTA). Each is built from a small **auto-layout engine**
+(`layout-engine.ts`: uniform grids,
 even distribution, and shrink-to-fit text sizing) so content stays aligned and
 never overflows its region — the same fit/scale behavior whether a template is
 built-in, hand-authored, or generated. Text and chrome are native editable

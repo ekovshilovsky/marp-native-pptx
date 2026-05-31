@@ -113,9 +113,9 @@ Layout correctness is locked by two test layers. A **geometry contract**
 deterministic source of truth that becomes the OOXML — that every box stays
 on-canvas, step numbers sit concentric in their circles, and titles never
 overlap their subtitles. On top of that, **golden-image visual regression**
-(`test/visual/`, `npm run test:visual`) renders each layout (light + dark
-theme) to PNG via LibreOffice and pixel-diffs it against committed baselines
-with `pixelmatch`, failing if more than 0.4% of pixels move. It's opt-in (the
+(`test/visual/`, `npm run test:visual`) renders every layout under every theme
+(all presets × all layouts) to PNG via LibreOffice and pixel-diffs each against
+a committed baseline with `pixelmatch`, failing if more than 0.4% of pixels move. It's opt-in (the
 fast `npm test` suite excludes it) and baselines are refreshed with
 `npm run test:visual:update`.
 

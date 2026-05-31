@@ -11,12 +11,13 @@ import { mapToPptx } from '../../src/map.js'
 import { emit } from '../../src/emit.js'
 import type { SlideLayout } from '../../src/types.js'
 import { buildThemeSlides, LAYOUT_ORDER } from '../../src/showcase-deck.js'
+import { themeList } from '../../src/themes.js'
 import { assetsExist, fileAssets, writeBakedAssets } from './assets.js'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const ASSET_DIR = join(HERE, 'assets')
 const GOLDEN_DIR = join(HERE, 'golden')
-const THEMES = ['vega', 'dusk'] // one light, one dark
+const THEMES = themeList().map((t) => t.id) // every preset, light and dark
 const UPDATE = process.env.UPDATE_GOLDENS === '1'
 // 96 DPI on a 13.333x7.5in slide => exactly 1280x720 px
 const DPI = 96

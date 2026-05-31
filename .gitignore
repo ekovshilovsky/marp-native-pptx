@@ -16,6 +16,10 @@ test/visual/.rendered/
 examples/generated/
 ~$*
 
+
+
+
+
 # .NET build artifacts (bundled schema validator)
 tools/**/bin/
 tools/**/obj/

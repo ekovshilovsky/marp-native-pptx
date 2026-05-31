@@ -136,17 +136,17 @@ export const THEMES: Record<string, ThemePreset> = {
     headingFont: 'Arial',
     bodyFont: 'Arial',
   }),
-  marigold: def({
-    id: 'marigold',
-    name: 'Marigold',
-    category: 'Bold',
-    tags: ['warm', 'marketing', 'energetic', 'gold'],
-    accent: 'd98324', // marigold
-    ink: '2b231a',
-    muted: '9a8a76',
-    bg: 'fffaf2',
-    surface: 'fbeed7',
-    palette: ['d98324', 'c2603f', 'c9a13b', '6b8f71', 'b5654a', '8a6d4f'],
+  orchid: def({
+    id: 'orchid',
+    name: 'Orchid',
+    category: 'Playful',
+    tags: ['playful', 'vibrant', 'magenta', 'pink'],
+    accent: 'c02f72', // raspberry-magenta
+    ink: '2a1f27',
+    muted: '95808c',
+    bg: 'fdf4f8', // cool pink-white
+    surface: 'fbe6f0',
+    palette: ['c02f72', 'e85d9b', '7d5ba6', '3aa6a0', 'f0a93b', '5b8def'],
     headingFont: 'Arial',
     bodyFont: 'Arial',
   }),
@@ -196,13 +196,13 @@ export const THEMES: Record<string, ThemePreset> = {
     id: 'ember',
     name: 'Ember',
     category: 'Bold',
-    tags: ['dark', 'bold', 'warm', 'ember'],
-    accent: 'd9774e', // ember orange
+    tags: ['dark', 'bold', 'red', 'fiery'],
+    accent: 'e0514b', // glowing crimson-red (distinct from Dusk's gold)
     ink: 'f0e8e0',
     muted: 'a89c92',
-    bg: '1f1a17', // warm charcoal
-    surface: '2a2420',
-    palette: ['d9774e', 'e0a458', 'c2603f', '8a9a6b', 'b08fae', '6fa1a8'],
+    bg: '1f1714', // deep warm charcoal
+    surface: '2a201d',
+    palette: ['e0514b', 'e8814f', 'e0b15a', 'c97f6b', '9a6b8f', '6fa1a8'],
     headingFont: 'Arial',
     bodyFont: 'Arial',
   }),

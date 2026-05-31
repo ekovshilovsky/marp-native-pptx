@@ -12,6 +12,7 @@
 // -> `emit` -> `validatePptx` unchanged. The hard part (PowerPoint-clean OOXML)
 // is already solved; this file is just a layout engine on top of it.
 import type { LayoutBox, Paragraph, Run, SlideLayout } from './types.js'
+import { box, distributeX, fitFontPt, gridCells, textHeight } from './layout-engine.js'
 
 export interface InlineRun {
   text: string
@@ -29,8 +30,9 @@ export type Block =
   | { type: 'bullets'; items: Inline[] }
   | { type: 'image'; src: string }
   | { type: 'feature'; color?: string; label: Inline; desc?: Inline } // icon-dot + label + description
+  | { type: 'event'; date: string; text: Inline } // a timeline event
 
-export type LayoutKind = 'title' | 'content' | 'two-column' | 'grid'
+export type LayoutKind = 'title' | 'content' | 'two-column' | 'grid' | 'timeline'
 
 export interface Slide {
   layout: LayoutKind
@@ -95,13 +97,10 @@ const paragraph = (
   bullet: bullet ? { type: 'bullet', indentLevel: 0 } : undefined,
 })
 
-// rough text-height estimate (px) for stacking content blocks
-const estimateHeight = (text: string, sizePt: number, widthPx: number): number => {
-  const fontPx = sizePt / 0.75
-  const charsPerLine = Math.max(1, Math.floor(widthPx / (fontPx * 0.5)))
-  const lines = Math.max(1, Math.ceil(text.length / charsPerLine))
-  return Math.ceil(lines * fontPx * 1.3)
-}
+// text-height estimate (px) for stacking content blocks — delegates to the
+// engine's measurement so the whole system shares one (pessimistic) model.
+const estimateHeight = (text: string, sizePt: number, widthPx: number): number =>
+  textHeight(text, sizePt, widthPx)
 const inlineText = (inline: Inline): string =>
   typeof inline === 'string' ? inline : inline.map((r) => r.text).join('')
 
@@ -159,6 +158,36 @@ function stack(blocks: Block[], x: number, y0: number, w: number, theme: Theme):
   return boxes
 }
 
+// Centered title + subtitle at the top (shrink-to-fit title). Returns the boxes
+// and the y where content below should begin. Used by grid/timeline templates.
+function centeredHeader(blocks: Block[], theme: Theme, startY: number): { boxes: LayoutBox[]; endY: number } {
+  const out: LayoutBox[] = []
+  let y = startY
+  for (const b of blocks) {
+    if (b.type === 'heading') {
+      const pt = fitFontPt(inlineText(b.text), W - 2 * M, 130, SIZE.h1, 24)
+      const h = estimateHeight(inlineText(b.text), pt, W - 2 * M) + 8
+      out.push({
+        kind: 'text',
+        rect: { xPx: M, yPx: y, wPx: W - 2 * M, hPx: h },
+        valign: 'top',
+        paras: [paragraph(toRuns(b.text, theme, pt, theme.ink).map((r) => ({ ...r, style: { ...r.style, bold: true } })), 'center', pt * 0.75 * 1.1)],
+      })
+      y += h + 12
+    } else if (b.type === 'paragraph') {
+      const h = estimateHeight(inlineText(b.text), SIZE.body, W - 2 * M) + 6
+      out.push({
+        kind: 'text',
+        rect: { xPx: M, yPx: y, wPx: W - 2 * M, hPx: h },
+        valign: 'top',
+        paras: [paragraph(toRuns(b.text, theme, SIZE.body, theme.muted), 'center', SIZE.body * 0.75 * 1.3)],
+      })
+      y += h + 10
+    }
+  }
+  return { boxes: out, endY: y }
+}
+
 /** Lay a block-IR deck out into the engine's geometric SlideLayout[]. */
 export function layoutDeck(deck: Deck): SlideLayout[] {
   const theme: Theme = { ...DEFAULT_THEME, ...(deck.theme ?? {}) }
@@ -182,65 +211,83 @@ export function layoutDeck(deck: Deck): SlideLayout[] {
         boxes.push(...stack(col, M + i * (colW + 60), top, colW, theme))
       })
     } else if (slide.layout === 'grid') {
-      // Centered title + subtitle, then an icon/feature grid (dot + label + desc),
-      // like a common "icon list" template — but as native, editable shapes.
+      // Centered title + subtitle, then an icon/feature grid (dot + label + desc)
+      // in UNIFORM cells (rows line up) with shrink-to-fit text (never overflows).
       const blocks = slide.blocks ?? []
-      let y = 56
-      for (const b of blocks) {
-        if (b.type === 'heading') {
-          const h = estimateHeight(inlineText(b.text), SIZE.h1, W - 2 * M) + 8
-          boxes.push({
-            kind: 'text',
-            rect: { xPx: M, yPx: y, wPx: W - 2 * M, hPx: h },
-            valign: 'top',
-            paras: [paragraph(toRuns(b.text, theme, SIZE.h1, theme.ink).map((r) => ({ ...r, style: { ...r.style, bold: true } })), 'center', SIZE.h1 * 0.75 * 1.1)],
-          })
-          y += h + 4
-        } else if (b.type === 'paragraph') {
-          const h = estimateHeight(inlineText(b.text), SIZE.body, W - 2 * M) + 6
-          boxes.push({
-            kind: 'text',
-            rect: { xPx: M, yPx: y, wPx: W - 2 * M, hPx: h },
-            valign: 'top',
-            paras: [paragraph(toRuns(b.text, theme, SIZE.body, theme.muted), 'center', SIZE.body * 0.75 * 1.3)],
-          })
-          y += h + 10
-        }
-      }
+      const head = centeredHeader(blocks.filter((b) => b.type === 'heading' || b.type === 'paragraph'), theme, 56)
+      boxes.push(...head.boxes)
       const feats = blocks.filter((b): b is Extract<Block, { type: 'feature' }> => b.type === 'feature')
       const palette = ['34d399', '38bdf8', '818cf8', 'f472b6', 'fbbf24', '22d3ee']
       const cols = feats.length <= 4 ? 2 : 3
       const rows = Math.max(1, Math.ceil(feats.length / cols))
-      const gridTop = Math.max(y + 36, 240)
-      const gutter = 50
-      const cellW = (W - 2 * M - gutter * (cols - 1)) / cols
-      const cellH = (H - gridTop - M) / rows
-      const dot = 50
+      const gridTop = Math.max(head.endY + 36, 230)
+      const cells = gridCells(box(M, gridTop, W - 2 * M, H - gridTop - M), rows, cols, 50, 24)
+      const dot = 46
+      const labelRegion = 46 // fixed top region per cell so rows align
       feats.forEach((f, i) => {
-        const c = i % cols
-        const r = Math.floor(i / cols)
-        const x = M + c * (cellW + gutter)
-        const cy = gridTop + r * cellH
-        boxes.push({ kind: 'shape', preset: 'ellipse', rect: { xPx: x, yPx: cy, wPx: dot, hPx: dot }, fill: f.color ?? palette[i % palette.length] })
-        const tx = x + dot + 18
-        const tw = cellW - dot - 18
-        const labelH = estimateHeight(inlineText(f.label), 18, tw) + 6
+        const cell = cells[i]
+        boxes.push({ kind: 'shape', preset: 'ellipse', rect: { xPx: cell.x, yPx: cell.y, wPx: dot, hPx: dot }, fill: f.color ?? palette[i % palette.length] })
+        const tx = cell.x + dot + 16
+        const tw = cell.w - dot - 16
+        const labelPt = fitFontPt(inlineText(f.label), tw, labelRegion, 18, 12)
         boxes.push({
           kind: 'text',
-          rect: { xPx: tx, yPx: cy - 2, wPx: tw, hPx: labelH },
+          rect: { xPx: tx, yPx: cell.y - 2, wPx: tw, hPx: labelRegion },
           valign: 'top',
-          paras: [paragraph(toRuns(f.label, theme, 18, theme.ink).map((r) => ({ ...r, style: { ...r.style, bold: true } })), 'left', 18 * 0.75 * 1.15)],
+          paras: [paragraph(toRuns(f.label, theme, labelPt, theme.ink).map((r) => ({ ...r, style: { ...r.style, bold: true } })), 'left', labelPt * 0.75 * 1.1)],
         })
         if (f.desc) {
-          const dy = cy - 2 + labelH + 4
+          const dy = cell.y - 2 + labelRegion
+          const dh = cell.y + cell.h - dy - 6
+          const descPt = fitFontPt(inlineText(f.desc), tw, dh, 15, 10)
           boxes.push({
             kind: 'text',
-            rect: { xPx: tx, yPx: dy, wPx: tw, hPx: cy + cellH - dy - 14 },
+            rect: { xPx: tx, yPx: dy, wPx: tw, hPx: dh },
             valign: 'top',
-            paras: [paragraph(toRuns(f.desc, theme, 15, theme.muted), 'left', 15 * 0.75 * 1.3)],
+            paras: [paragraph(toRuns(f.desc, theme, descPt, theme.muted), 'left', descPt * 0.75 * 1.3)],
           })
         }
       })
+    } else if (slide.layout === 'timeline') {
+      // Horizontal timeline: a centered title, an axis, evenly-distributed event
+      // nodes alternating above/below with stems and shrink-to-fit labels.
+      const blocks = slide.blocks ?? []
+      const head = centeredHeader(blocks.filter((b) => b.type === 'heading' || b.type === 'paragraph'), theme, 44)
+      boxes.push(...head.boxes)
+      const events = blocks.filter((b): b is Extract<Block, { type: 'event' }> => b.type === 'event')
+      const n = events.length
+      if (n) {
+        const axisY = 372
+        const pad = 90
+        const track = box(M + pad, axisY, W - 2 * M - 2 * pad, 0)
+        const xs = distributeX(track, n)
+        boxes.push({ kind: 'shape', rect: { xPx: track.x, yPx: axisY - 2, wPx: track.w, hPx: 4 }, fill: theme.muted })
+        const node = 18
+        const stemH = 64
+        const colW = Math.min(220, (W - 2 * M) / n)
+        const labelH = 100
+        events.forEach((e, i) => {
+          const cx = xs[i]
+          const above = i % 2 === 0
+          boxes.push({ kind: 'shape', preset: 'ellipse', rect: { xPx: cx - node / 2, yPx: axisY - node / 2, wPx: node, hPx: node }, fill: theme.accent })
+          boxes.push({ kind: 'shape', rect: { xPx: cx - 1, yPx: above ? axisY - stemH : axisY, wPx: 2, hPx: stemH }, fill: theme.muted })
+          const lx = cx - colW / 2
+          const ly = above ? axisY - stemH - labelH : axisY + stemH + 6
+          boxes.push({
+            kind: 'text',
+            rect: { xPx: lx, yPx: ly, wPx: colW, hPx: 26 },
+            valign: 'top',
+            paras: [paragraph(toRuns(e.date, theme, 16, theme.ink).map((r) => ({ ...r, style: { ...r.style, bold: true } })), 'center', 16 * 0.75 * 1.1)],
+          })
+          const tpt = fitFontPt(inlineText(e.text), colW, labelH - 30, 14, 9)
+          boxes.push({
+            kind: 'text',
+            rect: { xPx: lx, yPx: ly + 28, wPx: colW, hPx: labelH - 30 },
+            valign: 'top',
+            paras: [paragraph(toRuns(e.text, theme, tpt, theme.muted), 'center', tpt * 0.75 * 1.25)],
+          })
+        })
+      }
     } else {
       // 'content': title anchored at a CONSISTENT top, content in a region below.
       boxes.push(...stack(slide.blocks ?? [], M, TITLE_TOP, W - 2 * M, theme))

@@ -183,7 +183,7 @@ export async function emit(model: PptxModel, outPath: string): Promise<void> {
     else if (slide.background?.imageDataUri) s.background = { data: slide.background.imageDataUri }
     for (const shape of slide.shapes) {
       if (shape.kind === 'shape') {
-        const prst = shape.radiusIn && shape.radiusIn > 0 ? 'roundRect' : 'rect'
+        const prst = shape.preset ?? (shape.radiusIn && shape.radiusIn > 0 ? 'roundRect' : 'rect')
         s.addShape(prst, {
           x: shape.xIn, y: shape.yIn, w: shape.wIn, h: shape.hIn,
           fill: shape.fill ? { color: shape.fill } : { type: 'none' },

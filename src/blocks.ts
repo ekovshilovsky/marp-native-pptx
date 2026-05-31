@@ -28,8 +28,9 @@ export type Block =
   | { type: 'paragraph'; text: Inline }
   | { type: 'bullets'; items: Inline[] }
   | { type: 'image'; src: string }
+  | { type: 'feature'; color?: string; label: Inline; desc?: Inline } // icon-dot + label + description
 
-export type LayoutKind = 'title' | 'content' | 'two-column'
+export type LayoutKind = 'title' | 'content' | 'two-column' | 'grid'
 
 export interface Slide {
   layout: LayoutKind
@@ -179,6 +180,66 @@ export function layoutDeck(deck: Deck): SlideLayout[] {
       }
       cols.forEach((col, i) => {
         boxes.push(...stack(col, M + i * (colW + 60), top, colW, theme))
+      })
+    } else if (slide.layout === 'grid') {
+      // Centered title + subtitle, then an icon/feature grid (dot + label + desc),
+      // like a common "icon list" template — but as native, editable shapes.
+      const blocks = slide.blocks ?? []
+      let y = 56
+      for (const b of blocks) {
+        if (b.type === 'heading') {
+          const h = estimateHeight(inlineText(b.text), SIZE.h1, W - 2 * M) + 8
+          boxes.push({
+            kind: 'text',
+            rect: { xPx: M, yPx: y, wPx: W - 2 * M, hPx: h },
+            valign: 'top',
+            paras: [paragraph(toRuns(b.text, theme, SIZE.h1, theme.ink).map((r) => ({ ...r, style: { ...r.style, bold: true } })), 'center', SIZE.h1 * 0.75 * 1.1)],
+          })
+          y += h + 4
+        } else if (b.type === 'paragraph') {
+          const h = estimateHeight(inlineText(b.text), SIZE.body, W - 2 * M) + 6
+          boxes.push({
+            kind: 'text',
+            rect: { xPx: M, yPx: y, wPx: W - 2 * M, hPx: h },
+            valign: 'top',
+            paras: [paragraph(toRuns(b.text, theme, SIZE.body, theme.muted), 'center', SIZE.body * 0.75 * 1.3)],
+          })
+          y += h + 10
+        }
+      }
+      const feats = blocks.filter((b): b is Extract<Block, { type: 'feature' }> => b.type === 'feature')
+      const palette = ['34d399', '38bdf8', '818cf8', 'f472b6', 'fbbf24', '22d3ee']
+      const cols = feats.length <= 4 ? 2 : 3
+      const rows = Math.max(1, Math.ceil(feats.length / cols))
+      const gridTop = Math.max(y + 36, 240)
+      const gutter = 50
+      const cellW = (W - 2 * M - gutter * (cols - 1)) / cols
+      const cellH = (H - gridTop - M) / rows
+      const dot = 50
+      feats.forEach((f, i) => {
+        const c = i % cols
+        const r = Math.floor(i / cols)
+        const x = M + c * (cellW + gutter)
+        const cy = gridTop + r * cellH
+        boxes.push({ kind: 'shape', preset: 'ellipse', rect: { xPx: x, yPx: cy, wPx: dot, hPx: dot }, fill: f.color ?? palette[i % palette.length] })
+        const tx = x + dot + 18
+        const tw = cellW - dot - 18
+        const labelH = estimateHeight(inlineText(f.label), 18, tw) + 6
+        boxes.push({
+          kind: 'text',
+          rect: { xPx: tx, yPx: cy - 2, wPx: tw, hPx: labelH },
+          valign: 'top',
+          paras: [paragraph(toRuns(f.label, theme, 18, theme.ink).map((r) => ({ ...r, style: { ...r.style, bold: true } })), 'left', 18 * 0.75 * 1.15)],
+        })
+        if (f.desc) {
+          const dy = cy - 2 + labelH + 4
+          boxes.push({
+            kind: 'text',
+            rect: { xPx: tx, yPx: dy, wPx: tw, hPx: cy + cellH - dy - 14 },
+            valign: 'top',
+            paras: [paragraph(toRuns(f.desc, theme, 15, theme.muted), 'left', 15 * 0.75 * 1.3)],
+          })
+        }
       })
     } else {
       // 'content': title anchored at a CONSISTENT top, content in a region below.

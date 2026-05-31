@@ -50,6 +50,7 @@ function mapBox(b: LayoutBox, s: { x: number; y: number }): PptxShape {
       fill: b.fill,
       line: b.line,
       radiusIn: b.radiusPx != null ? pxToInch(b.radiusPx, s.x) : undefined,
+      preset: b.preset,
     }
   }
   if (b.kind === 'table') {

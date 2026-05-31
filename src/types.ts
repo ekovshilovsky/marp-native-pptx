@@ -35,7 +35,7 @@ export type LayoutBox =
   | { kind: 'text'; rect: Rect; paras: Paragraph[]; valign: 'top' | 'middle' | 'bottom' }
   | { kind: 'image'; rect: Rect; src: string }
   | { kind: 'table'; rect: Rect; rows: TableCell[][]; colWidthsPx: number[] }
-  | { kind: 'shape'; rect: Rect; fill?: string; line?: LineSpec; radiusPx?: number }
+  | { kind: 'shape'; rect: Rect; fill?: string; line?: LineSpec; radiusPx?: number; preset?: 'rect' | 'roundRect' | 'ellipse' }
 
 export interface SlideLayout { sizePx: { w: number; h: number }; boxes: LayoutBox[]; background?: { fill?: string; imageDataUri?: string } }
 
@@ -80,6 +80,7 @@ export interface PptxRect {
   fill?: string
   line?: LineSpec
   radiusIn?: number
+  preset?: 'rect' | 'roundRect' | 'ellipse'
 }
 export type PptxShape = PptxTextBox | PptxImage | PptxTable | PptxRect
 export interface PptxSlide { shapes: PptxShape[]; background?: { fill?: string; imageDataUri?: string } }

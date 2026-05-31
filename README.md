@@ -107,7 +107,13 @@ chart — bars from shapes, never an image), `stat-hero` (one giant statistic),
 overlaid on a baked-in scrim). Image-driven layouts (`full-bleed`,
 `image-feature`, `title` hero) embed real raster images; the showcase generates
 cohesive per-theme cover/tile artwork sized to each region (`showcase-art.ts`),
-swappable 1:1 with photographs. Each layout is built from a small **auto-layout
+swappable 1:1 with photographs. Raster images are placed with aspect-aware
+`fit` — `cover` (fill + center-crop), `contain` (letterbox), or `fill` — so a
+photo whose aspect differs from its region is cropped, never distorted
+(`raster-dims.ts` decodes the intrinsic size; see `examples/calibration.ts` for
+a visual proof). For a photo-real showcase, `examples/bake-images.ts` optionally
+generates per-theme imagery with Gemini 2.5 Flash Image (set `GEMINI_API_KEY` in
+`.env.local`) and runs it through the same `cover` path. Each layout is built from a small **auto-layout
 engine** (`layout-engine.ts`: uniform grids,
 even distribution, and shrink-to-fit text sizing) so content stays aligned and
 never overflows its region — the same fit/scale behavior whether a template is

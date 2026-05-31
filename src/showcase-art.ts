@@ -29,6 +29,29 @@ export function coverSvg(palette: string[]): string {
   )
 }
 
+// Wrap an existing raster (e.g. a generated photo) in a 16:9 frame with the
+// same left-to-right dark scrim the gradient covers carry, so white overlay
+// text on the full-bleed layout stays legible regardless of the photo's own
+// brightness. The image is cover-fit into the frame (xMidYMid slice). Rasterize
+// the result to PNG; it then behaves like any other baked cover.
+export function scrimWrapSvg(imageHref: string, w = 1600, h = 900): string {
+  // Two stacked gradients weight the darkening into the bottom-left corner —
+  // where the full-bleed kicker/heading/paragraph sit — while leaving the
+  // top-right of the photo clear. This keeps white text legible over even a
+  // near-white image without flattening the whole frame.
+  return (
+    `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">` +
+    `<defs>` +
+    `<linearGradient id="sx" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0.88"/><stop offset="0.78" stop-color="#000" stop-opacity="0"/></linearGradient>` +
+    `<linearGradient id="sy" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0.55"/><stop offset="0.52" stop-color="#000" stop-opacity="0"/></linearGradient>` +
+    `</defs>` +
+    `<image href="${imageHref}" xlink:href="${imageHref}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice"/>` +
+    `<rect width="${w}" height="${h}" fill="url(#sx)"/>` +
+    `<rect width="${w}" height="${h}" fill="url(#sy)"/>` +
+    `</svg>`
+  )
+}
+
 // An adversarial calibration "test card" at an arbitrary aspect. The centered
 // circle is the tell: a correct cover/contain fit keeps it round, while the old
 // stretch-to-box path squashes it into an ellipse. Corner brackets show whether

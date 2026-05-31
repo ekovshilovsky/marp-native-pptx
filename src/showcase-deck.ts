@@ -31,6 +31,7 @@ export const LAYOUT_ORDER: LayoutKind[] = [
   'chart',
   'stat-hero',
   'closing',
+  'full-bleed',
 ]
 
 // On a light theme the icon chips are light tints (use the dark icon variant);
@@ -45,6 +46,8 @@ function content(layout: LayoutKind, badge: string, t: ThemePreset, assets?: Sho
   const v = variantFor(t)
   const robot = assets?.robot[v]
   const icon = (i: number): string | undefined => assets?.icons[v][ICON_KEYS[i % ICON_KEYS.length]]
+  const cover = assets?.art[t.id]?.cover
+  const tile = assets?.art[t.id]?.tile
   switch (layout) {
     case 'title':
       return {
@@ -66,7 +69,17 @@ function content(layout: LayoutKind, badge: string, t: ThemePreset, assets?: Sho
             type: 'bullets',
             items: ['Wakes on your voice', 'Learns your routines', 'Looks after the home'],
           },
-          ...(robot ? [{ type: 'image', src: robot } as Block] : []),
+          ...(tile ? [{ type: 'image', src: tile } as Block] : []),
+        ],
+      }
+    case 'full-bleed':
+      return {
+        layout,
+        blocks: [
+          { type: 'kicker', text: badge },
+          { type: 'heading', level: 1, text: 'A calmer, smarter home' },
+          { type: 'paragraph', text: 'Pixel fades into the background until the moment you need it.' },
+          ...(cover ? [{ type: 'image', src: cover } as Block] : []),
         ],
       }
     case 'section':

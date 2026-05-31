@@ -6,6 +6,7 @@
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { bakeShowcaseAssets, ICON_KEYS, type ShowcaseAssets } from '../../src/showcase-assets.js'
+import { themeList } from '../../src/themes.js'
 
 const dataUriToBuffer = (uri: string): Buffer => Buffer.from(uri.replace(/^data:image\/png;base64,/, ''), 'base64')
 
@@ -19,6 +20,10 @@ export async function writeBakedAssets(dir: string): Promise<void> {
   }
   writeFileSync(join(dir, 'robot-dark.png'), dataUriToBuffer(a.robot.dark))
   writeFileSync(join(dir, 'robot-light.png'), dataUriToBuffer(a.robot.light))
+  for (const t of themeList()) {
+    writeFileSync(join(dir, `cover-${t.id}.png`), dataUriToBuffer(a.art[t.id].cover))
+    writeFileSync(join(dir, `tile-${t.id}.png`), dataUriToBuffer(a.art[t.id].tile))
+  }
 }
 
 /** Build a ShowcaseAssets that points at the committed PNG files via file:// URLs. */
@@ -26,9 +31,11 @@ export function fileAssets(dir: string): ShowcaseAssets {
   const url = (name: string) => `file://${join(dir, name)}`
   const icons = (variant: 'dark' | 'light') =>
     Object.fromEntries(ICON_KEYS.map((k) => [k, url(`icon-${k}-${variant}.png`)]))
+  const art = Object.fromEntries(themeList().map((t) => [t.id, { cover: url(`cover-${t.id}.png`), tile: url(`tile-${t.id}.png`) }]))
   return {
     icons: { dark: icons('dark'), light: icons('light') },
     robot: { dark: url('robot-dark.png'), light: url('robot-light.png') },
+    art,
   }
 }
 

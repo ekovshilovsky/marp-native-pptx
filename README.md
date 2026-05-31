@@ -103,8 +103,12 @@ grid), `metrics` (big-number stat cards), `timeline` (horizontal axis with
 alternating event labels), `steps` (numbered process), `quote`, `bento`
 (mixed-size tile mosaic), `comparison` (side-by-side cards), `chart` (native bar
 chart — bars from shapes, never an image), `stat-hero` (one giant statistic),
-and `closing` (sign-off / CTA). Each is built from a small **auto-layout engine**
-(`layout-engine.ts`: uniform grids,
+`closing` (sign-off / CTA), and `full-bleed` (image fills the slide with text
+overlaid on a baked-in scrim). Image-driven layouts (`full-bleed`,
+`image-feature`, `title` hero) embed real raster images; the showcase generates
+cohesive per-theme cover/tile artwork sized to each region (`showcase-art.ts`),
+swappable 1:1 with photographs. Each layout is built from a small **auto-layout
+engine** (`layout-engine.ts`: uniform grids,
 even distribution, and shrink-to-fit text sizing) so content stays aligned and
 never overflows its region — the same fit/scale behavior whether a template is
 built-in, hand-authored, or generated. Text and chrome are native editable

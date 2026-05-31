@@ -51,6 +51,7 @@ export type LayoutKind =
   | 'chart'
   | 'stat-hero'
   | 'closing'
+  | 'full-bleed'
 
 export interface Slide {
   layout: LayoutKind
@@ -755,6 +756,46 @@ export function layoutDeck(deck: Deck): SlideLayout[] {
             paras: [paragraph(toRuns(it, theme, SIZE.body, theme.ink), 'center', SIZE.body * 0.75 * 1.2)],
           })
           y += 32
+        })
+      }
+    } else if (slide.layout === 'full-bleed') {
+      // A photo fills the whole slide; kicker/heading/paragraph overlay the
+      // lower-left in white (the image carries a baked-in left scrim for legibility).
+      const blocks = slide.blocks ?? []
+      const img = blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')
+      if (img) boxes.push({ kind: 'image', rect: { xPx: 0, yPx: 0, wPx: W, hPx: H }, src: img.src })
+      const onImg = 'ffffff'
+      const dim = 'e6e8ee'
+      let y = 372
+      const kicker = blocks.find((b): b is Extract<Block, { type: 'kicker' }> => b.type === 'kicker')
+      if (kicker) {
+        boxes.push({
+          kind: 'text',
+          rect: { xPx: M, yPx: y, wPx: 760, hPx: 36 },
+          valign: 'top',
+          paras: [paragraph(toRuns(kicker.text.toUpperCase(), theme, 15, dim).map((r) => ({ ...r, style: { ...r.style, bold: true } })), 'left', 15 * 0.75 * 1.2)],
+        })
+        y += 44
+      }
+      const heading = blocks.find((b): b is Extract<Block, { type: 'heading' }> => b.type === 'heading')
+      if (heading) {
+        const pt = fitFontPt(inlineText(heading.text), 820, 150, 50, 30)
+        const h = estimateHeight(inlineText(heading.text), pt, 820) + 8
+        boxes.push({
+          kind: 'text',
+          rect: { xPx: M, yPx: y, wPx: 820, hPx: h },
+          valign: 'top',
+          paras: [paragraph(toRuns(heading.text, theme, pt, onImg).map((r) => ({ ...r, style: { ...r.style, bold: true } })), 'left', pt * 0.75 * 1.1)],
+        })
+        y += h + 12
+      }
+      const para = blocks.find((b): b is Extract<Block, { type: 'paragraph' }> => b.type === 'paragraph')
+      if (para) {
+        boxes.push({
+          kind: 'text',
+          rect: { xPx: M, yPx: y, wPx: 640, hPx: 80 },
+          valign: 'top',
+          paras: [paragraph(toRuns(para.text, theme, SIZE.body, dim), 'left', SIZE.body * 0.75 * 1.3)],
         })
       }
     } else {

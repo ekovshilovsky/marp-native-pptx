@@ -35,6 +35,7 @@ describe('showcase: every layout under every theme', () => {
     const assets: ShowcaseAssets = {
       icons: { dark: fakeIcons, light: fakeIcons },
       robot: { dark: PNG_1x1, light: PNG_1x1 },
+      art: { x: { cover: PNG_1x1, tile: PNG_1x1 } },
     }
     const out = join(mkdtempSync(join(tmpdir(), 'mnp-showcase-img-')), 'imgs.pptx')
     await blocksToPptx(

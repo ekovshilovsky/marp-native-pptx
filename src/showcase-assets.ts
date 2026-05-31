@@ -5,6 +5,8 @@
 // places whatever image `src` it is handed. Baking happens once, in the
 // example/test, via the Chromium rasterizer.
 import { svgsToPngDataUris } from './rasterize.js'
+import { coverSvg, tileSvg } from './showcase-art.js'
+import { themeList } from './themes.js'
 
 const wrap = (inner: string, stroke: string): string =>
   `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#${stroke}" ` +
@@ -44,6 +46,8 @@ export interface ShowcaseAssets {
   // icons baked in a dark ink (for light chips) and a light ink (for dark chips)
   icons: { dark: Record<string, string>; light: Record<string, string> }
   robot: { dark: string; light: string }
+  // per-theme generated imagery: a 16:9 cover (with scrim) + a square photo tile
+  art: Record<string, { cover: string; tile: string }>
 }
 
 // ink colors used for the two contrast variants
@@ -64,5 +68,13 @@ export async function bakeShowcaseAssets(): Promise<ShowcaseAssets> {
     dark[k] = iconUris[i]
     light[k] = iconUris[keys.length + i]
   })
-  return { icons: { dark, light }, robot: { dark: robotUris[0], light: robotUris[1] } }
+  // per-theme cover (16:9) + tile (square), gradients from each theme's palette
+  const themes = themeList()
+  const coverUris = await svgsToPngDataUris(themes.map((t) => coverSvg(t.palette)), { width: 1600, height: 900 })
+  const tileUris = await svgsToPngDataUris(themes.map((t) => tileSvg(t.palette, 0)), { width: 560, height: 560 })
+  const art: Record<string, { cover: string; tile: string }> = {}
+  themes.forEach((t, i) => {
+    art[t.id] = { cover: coverUris[i], tile: tileUris[i] }
+  })
+  return { icons: { dark, light }, robot: { dark: robotUris[0], light: robotUris[1] }, art }
 }

@@ -42,7 +42,7 @@ function mapBox(b: LayoutBox, s: { x: number; y: number }): PptxShape {
     wIn: pxToInch(b.rect.wPx, s.x),
     hIn: pxToInch(b.rect.hPx, s.y),
   }
-  if (b.kind === 'image') return { kind: 'image', ...geom, src: b.src }
+  if (b.kind === 'image') return { kind: 'image', ...geom, src: b.src, fit: b.fit }
   if (b.kind === 'shape') {
     return {
       kind: 'shape',

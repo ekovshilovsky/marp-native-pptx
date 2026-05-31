@@ -33,7 +33,7 @@ export interface LineSpec { color: string; widthPt: number }
 
 export type LayoutBox =
   | { kind: 'text'; rect: Rect; paras: Paragraph[]; valign: 'top' | 'middle' | 'bottom' }
-  | { kind: 'image'; rect: Rect; src: string }
+  | { kind: 'image'; rect: Rect; src: string; fit?: ImageFit }
   | { kind: 'table'; rect: Rect; rows: TableCell[][]; colWidthsPx: number[] }
   | { kind: 'shape'; rect: Rect; fill?: string; line?: LineSpec; radiusPx?: number; preset?: 'rect' | 'roundRect' | 'ellipse' }
 
@@ -57,10 +57,16 @@ export interface PptxTextBox {
   paragraphs: { runs: PptxRunOpts[]; align: string; lineSpacingPt: number; bullet?: BulletSpec }[]
   valign: 'top' | 'middle' | 'bottom'
 }
+// How a raster fills its box. 'fill' stretches to the box (the default — right
+// for icons/illustrations authored at the target aspect). 'cover' scales to fill
+// and center-crops; 'contain' fits the whole image inside, letterboxed. cover/
+// contain require the image's intrinsic aspect, decoded at emit time.
+export type ImageFit = 'fill' | 'cover' | 'contain'
 export interface PptxImage {
   kind: 'image'
   xIn: number; yIn: number; wIn: number; hIn: number
   src: string
+  fit?: ImageFit
 }
 export interface PptxTableCell {
   runs: PptxRunOpts[]

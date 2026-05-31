@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import { execFileSync } from 'node:child_process'
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -17,6 +17,11 @@ import { assetsExist, fileAssets, writeBakedAssets } from './assets.js'
 const HERE = dirname(fileURLToPath(import.meta.url))
 const ASSET_DIR = join(HERE, 'assets')
 const GOLDEN_DIR = join(HERE, 'golden')
+// Set KEEP_RENDERS=1 to copy every rendered page to test/visual/.rendered/ (a
+// gitignored dir) so the actual LibreOffice output can be eyeballed, not just
+// the pass/fail diff. Off by default to keep the suite side-effect-free.
+const KEEP_RENDERS = process.env.KEEP_RENDERS === '1'
+const RENDERED_DIR = join(HERE, '.rendered')
 const THEMES = themeList().map((t) => t.id) // every preset, light and dark
 const UPDATE = process.env.UPDATE_GOLDENS === '1'
 // 96 DPI on a 13.333x7.5in slide => exactly 1280x720 px
@@ -47,10 +52,17 @@ const rendered: Record<string, string[]> = {}
 beforeAll(async () => {
   if (UPDATE || !assetsExist(ASSET_DIR)) await writeBakedAssets(ASSET_DIR) // bakes icons/robot (Chromium)
   mkdirSync(GOLDEN_DIR, { recursive: true })
+  if (KEEP_RENDERS) {
+    rmSync(RENDERED_DIR, { recursive: true, force: true })
+    mkdirSync(RENDERED_DIR, { recursive: true })
+  }
   const work = mkdtempSync(join(tmpdir(), 'mnp-visual-'))
   for (const themeId of THEMES) {
     const slides = buildThemeSlides(themeId, fileAssets(ASSET_DIR))
     rendered[themeId] = await renderSlidesToPngs(slides, join(work, themeId))
+    if (KEEP_RENDERS) {
+      rendered[themeId].forEach((png, i) => copyFileSync(png, join(RENDERED_DIR, `${themeId}-${LAYOUT_ORDER[i]}.png`)))
+    }
   }
 }, 180000)
 

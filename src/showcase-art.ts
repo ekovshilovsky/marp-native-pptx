@@ -29,6 +29,37 @@ export function coverSvg(palette: string[]): string {
   )
 }
 
+// An adversarial calibration "test card" at an arbitrary aspect. The centered
+// circle is the tell: a correct cover/contain fit keeps it round, while the old
+// stretch-to-box path squashes it into an ellipse. Corner brackets show whether
+// the crop took from the right edges, and the label states the source aspect.
+// Use it to eyeball that a non-square source fits a differently-shaped region.
+export function calibrationSvg(w: number, h: number, label = `${w}x${h}`): string {
+  const r = Math.min(w, h) * 0.36
+  const cx = w / 2
+  const cy = h / 2
+  const arm = Math.min(w, h) * 0.12
+  const m = Math.min(w, h) * 0.06 // bracket inset from each corner
+  const bracket = (x: number, y: number, dx: number, dy: number): string =>
+    `<path d="M ${x + dx * arm} ${y} H ${x} V ${y + dy * arm}" fill="none" stroke="#fff" stroke-width="6"/>`
+  return (
+    `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">` +
+    `<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#11131a"/><stop offset="1" stop-color="#2b3350"/></linearGradient></defs>` +
+    `<rect width="${w}" height="${h}" fill="url(#bg)"/>` +
+    // concentric rings — eccentricity reveals any non-uniform scaling
+    `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#ff5d73" stroke-width="8"/>` +
+    `<circle cx="${cx}" cy="${cy}" r="${r * 0.6}" fill="none" stroke="#ffd166" stroke-width="6"/>` +
+    `<line x1="${cx}" y1="${cy - r}" x2="${cx}" y2="${cy + r}" stroke="#fff" stroke-width="3"/>` +
+    `<line x1="${cx - r}" y1="${cy}" x2="${cx + r}" y2="${cy}" stroke="#fff" stroke-width="3"/>` +
+    bracket(m, m, 1, 1) +
+    bracket(w - m, m, -1, 1) +
+    bracket(m, h - m, 1, -1) +
+    bracket(w - m, h - m, -1, -1) +
+    `<text x="${cx}" y="${h - m * 1.5}" fill="#fff" font-family="Arial" font-size="${Math.min(w, h) * 0.08}" text-anchor="middle">${label}</text>` +
+    `</svg>`
+  )
+}
+
 // A square tile (no scrim) for image-feature panels / galleries. `seed` varies
 // the composition so a row of tiles looks distinct.
 export function tileSvg(palette: string[], seed: number): string {

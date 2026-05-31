@@ -4,13 +4,41 @@
 import { createRequire } from 'module'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import type { PptxModel } from './types.js'
+import type { PptxImage, PptxModel } from './types.js'
+import { rasterDims } from './raster-dims.js'
 
 const require = createRequire(import.meta.url)
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
 const PptxGenJS = require('pptxgenjs') as any
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
 const JSZip = require('jszip') as any
+
+function safeRead(path: string): Buffer | null {
+  try {
+    return readFileSync(path)
+  } catch {
+    return null
+  }
+}
+
+// pptxgenjs addImage options for one image. 'fill' (default) stretches to the
+// box. cover/contain need the image's intrinsic aspect — which pptxgenjs never
+// measures — so we decode it and feed the aspect through the outer w/h while the
+// `sizing` box drives the crop. (pptxgenjs's crop math is ratio-only, so the
+// absolute outer size is irrelevant.) Undecodable images degrade to a stretch.
+function imageGeom(shape: PptxImage, ref: { data?: string; path?: string }): Record<string, number | object> {
+  const geom = { x: shape.xIn, y: shape.yIn, w: shape.wIn, h: shape.hIn }
+  if (!shape.fit || shape.fit === 'fill') return geom
+  const dims = rasterDims(ref.data ?? safeRead(ref.path!) ?? Buffer.alloc(0))
+  if (!dims) return geom
+  return {
+    x: shape.xIn,
+    y: shape.yIn,
+    w: shape.wIn,
+    h: (shape.wIn * dims.h) / dims.w,
+    sizing: { type: shape.fit, w: shape.wIn, h: shape.hIn },
+  }
+}
 
 /**
  * Post-process the written .pptx zip to fix two PowerPoint "repair" triggers
@@ -193,14 +221,10 @@ export async function emit(model: PptxModel, outPath: string): Promise<void> {
         continue
       }
       if (shape.kind === 'image') {
-        const geom = { x: shape.xIn, y: shape.yIn, w: shape.wIn, h: shape.hIn }
-        if (shape.src.startsWith('data:')) {
-          s.addImage({ data: shape.src, ...geom })
-        } else if (shape.src.startsWith('file://')) {
-          s.addImage({ path: fileURLToPath(shape.src), ...geom })
-        } else {
-          s.addImage({ path: shape.src, ...geom })
-        }
+        const ref = shape.src.startsWith('data:')
+          ? { data: shape.src }
+          : { path: shape.src.startsWith('file://') ? fileURLToPath(shape.src) : shape.src }
+        s.addImage({ ...ref, ...imageGeom(shape, ref) })
         continue
       }
       if (shape.kind === 'table') {

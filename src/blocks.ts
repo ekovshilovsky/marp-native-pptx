@@ -200,7 +200,7 @@ function stack(blocks: Block[], x: number, y0: number, w: number, theme: Theme):
       y += h + 12
     } else if (b.type === 'image') {
       const h = 260
-      boxes.push({ kind: 'image', rect: { xPx: x, yPx: y, wPx: w, hPx: h }, src: b.src })
+      boxes.push({ kind: 'image', rect: { xPx: x, yPx: y, wPx: w, hPx: h }, src: b.src, fit: 'cover' })
       y += h + 12
     }
   }
@@ -255,7 +255,7 @@ export function layoutDeck(deck: Deck): SlideLayout[] {
         const heroX = W - heroW
         boxes.push({ kind: 'shape', rect: { xPx: heroX, yPx: 0, wPx: heroW, hPx: H }, fill: theme.surface })
         const pad = 70
-        boxes.push({ kind: 'image', rect: { xPx: heroX + pad, yPx: (H - (heroW - 2 * pad)) / 2, wPx: heroW - 2 * pad, hPx: heroW - 2 * pad }, src: hero.src })
+        boxes.push({ kind: 'image', rect: { xPx: heroX + pad, yPx: (H - (heroW - 2 * pad)) / 2, wPx: heroW - 2 * pad, hPx: heroW - 2 * pad }, src: hero.src, fit: 'cover' })
         boxes.push(...stack(textBlocks, M, 240, heroX - M - 60, theme))
       } else {
         boxes.push(...stack(textBlocks, M, 230, W - 2 * M, theme))
@@ -273,7 +273,7 @@ export function layoutDeck(deck: Deck): SlideLayout[] {
         boxes.push({ kind: 'shape', preset: 'roundRect', radiusPx: 22, rect: { xPx: imgX, yPx: 150, wPx: imgW, hPx: H - 300 }, fill: theme.surface })
         const pad = 56
         const side = H - 300 - 2 * pad
-        boxes.push({ kind: 'image', rect: { xPx: imgX + (imgW - side) / 2, yPx: 150 + pad, wPx: side, hPx: side }, src: img.src })
+        boxes.push({ kind: 'image', rect: { xPx: imgX + (imgW - side) / 2, yPx: 150 + pad, wPx: side, hPx: side }, src: img.src, fit: 'cover' })
       }
       boxes.push(...stack(textBlocks, M, TITLE_TOP + 80, imgX - M - 60, theme))
     } else if (slide.layout === 'two-column') {
@@ -763,7 +763,7 @@ export function layoutDeck(deck: Deck): SlideLayout[] {
       // lower-left in white (the image carries a baked-in left scrim for legibility).
       const blocks = slide.blocks ?? []
       const img = blocks.find((b): b is Extract<Block, { type: 'image' }> => b.type === 'image')
-      if (img) boxes.push({ kind: 'image', rect: { xPx: 0, yPx: 0, wPx: W, hPx: H }, src: img.src })
+      if (img) boxes.push({ kind: 'image', rect: { xPx: 0, yPx: 0, wPx: W, hPx: H }, src: img.src, fit: 'cover' })
       const onImg = 'ffffff'
       const dim = 'e6e8ee'
       let y = 372

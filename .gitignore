@@ -3,6 +3,8 @@ dist/
 *.log
 .DS_Store
 test/**/*.actual.pptx
+# eyeball-only renders from `KEEP_RENDERS=1 npm run test:visual`
+test/visual/.rendered/
 # generated showcase output + office lock files (regenerate via examples/showcase.ts)
 /showcase.pptx
 /showcase-matrix.pptx

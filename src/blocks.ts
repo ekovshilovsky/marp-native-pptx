@@ -132,10 +132,12 @@ const hexToRgb = (h: string): [number, number, number] => {
   return [parseInt(s.slice(0, 2), 16), parseInt(s.slice(2, 4), 16), parseInt(s.slice(4, 6), 16)]
 }
 const toHex = (n: number): string => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0')
-// relative luminance (perceptual weighting) → pick dark or light ink for contrast
+// relative luminance (perceptual weighting) → pick dark or light ink for
+// contrast. Threshold 0.55: mid-bright accents (marigold, ember, gold) cross
+// below it and correctly take dark ink, which contrasts far better than white.
 const readableOn = (bgHex: string): string => {
   const [r, g, b] = hexToRgb(bgHex)
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? '1f2933' : 'ffffff'
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? '1f2933' : 'ffffff'
 }
 // linear blend of two hex colors, t in [0,1] toward `b`
 const mix = (a: string, b: string, t: number): string => {
@@ -383,7 +385,9 @@ export function layoutDeck(deck: Deck): SlideLayout[] {
       const blocks = slide.blocks ?? []
       bgFill = theme.accent
       const onAccent = readableOn(theme.accent)
-      const dim = mix(theme.accent, onAccent, 0.78) // a muted version of the inverted ink
+      // muted inverted ink that stays readable: start from the high-contrast ink
+      // and bleed only slightly toward the accent (not most of the way to it).
+      const dim = mix(onAccent, theme.accent, 0.2)
       let y = 250
       const kicker = blocks.find((b) => b.type === 'kicker') as Extract<Block, { type: 'kicker' }> | undefined
       if (kicker) {

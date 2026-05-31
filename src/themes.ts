@@ -127,12 +127,12 @@ export const THEMES: Record<string, ThemePreset> = {
     name: 'Mist',
     category: 'Light',
     tags: ['airy', 'calm', 'cool', 'data'],
-    accent: '6b8a9a', // muted blue-grey
-    ink: '2a333a',
-    muted: '8a97a0',
+    accent: '40697a', // deep slate-teal — reads clearly on the near-white bg
+    ink: '24313a',
+    muted: '79868f',
     bg: 'fbfcfd',
-    surface: 'eef2f4',
-    palette: ['6b8a9a', '8fa9b5', 'b0a07f', '7d8aa0', '9cb3a0', 'c08a8a'],
+    surface: 'e9eef1',
+    palette: ['40697a', '5f8ba0', 'a8894f', '5d6f8a', '4f8a76', 'b06a6a'],
     headingFont: 'Arial',
     bodyFont: 'Arial',
   }),

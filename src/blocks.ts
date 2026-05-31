@@ -565,7 +565,20 @@ export function layoutDeck(deck: Deck): SlideLayout[] {
           boxes.push({ kind: 'shape', preset: 'roundRect', radiusPx: 18, rect: { xPx: t.x, yPx: t.y, wPx: t.w, hPx: t.h }, fill: theme.surface })
           const pad = hero ? 28 : 18
           const chip = hero ? 60 : 42
-          let cy = t.y + pad
+          const tw = t.w - 2 * pad
+          const labelPt = hero ? 24 : 18
+          const labelH = estimateHeight(inlineText(f.label), labelPt, tw) + 6
+          // measure the desc so the whole block can be vertically centered in the
+          // tile (a tall hero tile would otherwise top-align with a big empty base)
+          let descPt = 0
+          let descH = 0
+          if (f.desc) {
+            const avail = Math.max(20, t.h - 2 * pad - chip - 14 - labelH - 6)
+            descPt = fitFontPt(inlineText(f.desc), tw, avail, hero ? 16 : 14, 9)
+            descH = estimateHeight(inlineText(f.desc), descPt, tw)
+          }
+          const blockH = chip + 14 + labelH + (f.desc ? 6 + descH : 0)
+          let cy = t.y + Math.max(pad, (t.h - blockH) / 2)
           if (f.icon) {
             boxes.push({ kind: 'shape', preset: 'roundRect', radiusPx: 12, rect: { xPx: t.x + pad, yPx: cy, wPx: chip, hPx: chip }, fill: mix(color, theme.surface, 0.82) })
             const ip = Math.round(chip * 0.22)
@@ -574,23 +587,20 @@ export function layoutDeck(deck: Deck): SlideLayout[] {
             boxes.push({ kind: 'shape', preset: 'ellipse', rect: { xPx: t.x + pad, yPx: cy, wPx: chip * 0.6, hPx: chip * 0.6 }, fill: color })
           }
           cy += chip + 14
-          const labelPt = hero ? 24 : 18
-          const labelH = estimateHeight(inlineText(f.label), labelPt, t.w - 2 * pad) + 6
           boxes.push({
             kind: 'text',
-            rect: { xPx: t.x + pad, yPx: cy, wPx: t.w - 2 * pad, hPx: labelH },
+            rect: { xPx: t.x + pad, yPx: cy, wPx: tw, hPx: labelH },
             valign: 'top',
             paras: [paragraph(toRuns(f.label, theme, labelPt, theme.ink).map((r) => ({ ...r, style: { ...r.style, bold: true } })), 'left', labelPt * 0.75 * 1.1)],
           })
-          cy += labelH + 4
+          cy += labelH
           if (f.desc) {
-            const dh = t.y + t.h - cy - pad
-            const dpt = fitFontPt(inlineText(f.desc), t.w - 2 * pad, dh, hero ? 16 : 14, 9)
+            cy += 6
             boxes.push({
               kind: 'text',
-              rect: { xPx: t.x + pad, yPx: cy, wPx: t.w - 2 * pad, hPx: dh },
+              rect: { xPx: t.x + pad, yPx: cy, wPx: tw, hPx: descH },
               valign: 'top',
-              paras: [paragraph(toRuns(f.desc, theme, dpt, theme.muted), 'left', dpt * 0.75 * 1.25)],
+              paras: [paragraph(toRuns(f.desc, theme, descPt, theme.muted), 'left', descPt * 0.75 * 1.25)],
             })
           }
         })

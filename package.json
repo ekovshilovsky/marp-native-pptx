@@ -26,6 +26,8 @@
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:visual": "vitest run --config vitest.visual.config.ts",
+    "test:visual:update": "UPDATE_GOLDENS=1 vitest run --config vitest.visual.config.ts",
     "cli": "tsx src/cli.ts",
     "validate": "tsx src/validate-cli.ts"
   },
@@ -40,6 +42,9 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/pngjs": "^6.0.5",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"

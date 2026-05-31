@@ -12,7 +12,7 @@
 //   buildMatrix()  — the exhaustive layout × theme matrix (for validation)
 import type { SlideLayout } from './types.js'
 import { layoutDeck, type Block, type LayoutKind, type Slide } from './blocks.js'
-import { themeList, type ThemePreset } from './themes.js'
+import { getTheme, themeList, type ThemePreset } from './themes.js'
 import { ICON_KEYS, type ShowcaseAssets } from './showcase-assets.js'
 
 export const LAYOUT_ORDER: LayoutKind[] = [
@@ -197,6 +197,12 @@ export function buildGallery(assets?: ShowcaseAssets, perTheme = 4): SlideLayout
     out.push(...layoutDeck({ theme: t, slides: layouts.map((l) => content(l, badgeFor(t, l), t, assets)) }))
   })
   return out
+}
+
+/** All layouts (in LAYOUT_ORDER) rendered under a single theme. */
+export function buildThemeSlides(themeId: string, assets?: ShowcaseAssets): SlideLayout[] {
+  const t = getTheme(themeId)
+  return layoutDeck({ theme: t, slides: LAYOUT_ORDER.map((l) => content(l, badgeFor(t, l), t, assets)) })
 }
 
 /** Exhaustive layout × theme matrix (every combination), grouped by theme. */

@@ -108,11 +108,16 @@ built-in, hand-authored, or generated. Text and chrome are native editable
 shapes; `image` blocks (icons, photos, illustrations) embed as real images —
 only the genuinely-raster parts are raster, never the text.
 
-Layout correctness is locked by a **geometry contract** test
-(`test/layout-geometry.test.ts`): it asserts on the computed px geometry — the
+Layout correctness is locked by two test layers. A **geometry contract**
+(`test/layout-geometry.test.ts`) asserts on the computed px geometry — the
 deterministic source of truth that becomes the OOXML — that every box stays
 on-canvas, step numbers sit concentric in their circles, and titles never
-overlap their subtitles. Pixel-precise, no flaky image diffing.
+overlap their subtitles. On top of that, **golden-image visual regression**
+(`test/visual/`, `npm run test:visual`) renders each layout (light + dark
+theme) to PNG via LibreOffice and pixel-diffs it against committed baselines
+with `pixelmatch`, failing if more than 0.4% of pixels move. It's opt-in (the
+fast `npm test` suite excludes it) and baselines are refreshed with
+`npm run test:visual:update`.
 
 ### Themes
 

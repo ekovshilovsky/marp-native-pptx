@@ -3,6 +3,10 @@ dist/
 *.log
 .DS_Store
 test/**/*.actual.pptx
+# generated showcase output + office lock files (regenerate via examples/showcase.ts)
+/showcase.pptx
+/showcase-matrix.pptx
+~$*
 
 # .NET build artifacts (bundled schema validator)
 tools/**/bin/

@@ -18,6 +18,15 @@ export async function markdownToPptx(md: string, outPath: string): Promise<void>
   await blocksToPptx(markdownToDeck(md), outPath)
 }
 
-export { layoutDeck } from './blocks.js'
+export { layoutDeck, DEFAULT_THEME } from './blocks.js'
 export { markdownToDeck } from './md-blocks.js'
 export type { Deck, Slide, Block, InlineRun, Theme, LayoutKind } from './blocks.js'
+export {
+  THEMES,
+  themeList,
+  getTheme,
+  themesByCategory,
+  themesByTag,
+  allTags,
+} from './themes.js'
+export type { ThemePreset, ThemeCategory } from './themes.js'

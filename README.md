@@ -93,9 +93,36 @@ await markdownToPptx(md, 'deck.pptx')
 ```
 
 Both the Marp/DOM path and the block path feed the **same `emit` + validator**, so
-the output is PowerPoint-clean either way. Templates today: `title`, `content`,
-`two-column` (each draws an accent rule under headings via the native `shape`
-primitive). No browser is involved on the block path.
+the output is PowerPoint-clean either way. No browser is involved on the block path.
+
+### Layout templates
+
+`title`, `content`, `two-column`, `section` (full-bleed accent divider), `grid`
+(icon-dot feature grid), `metrics` (big-number stat cards), `timeline`
+(horizontal axis with alternating event labels), `steps` (numbered process),
+and `quote`. Each is built from a small **auto-layout engine** (`layout-engine.ts`:
+uniform grids, even distribution, and shrink-to-fit text sizing) so content stays
+aligned and never overflows its region — the same fit/scale behavior whether a
+template is built-in, hand-authored, or generated. Everything is a native,
+editable shape (no images).
+
+### Themes
+
+A curated, **tagged** preset set (`themes.ts`) — so a UI or an AI can pick by
+intent rather than raw hex:
+
+```ts
+import { themeList, themesByTag, getTheme } from 'marp-native-pptx/blocks'
+themesByTag('dark')          // -> Midnight-style presets
+getTheme('vega')             // the house signature: electric indigo on cool paper
+await blocksToPptx({ theme: getTheme('plum'), slides }, 'deck.pptx')
+```
+
+13 presets across `Light`/`Dark`/`Minimal`/`Bold`/`Professional`/`Playful`/`Editorial`,
+each a full palette (accent, ink, muted, bg, surface, 6-color accent palette,
+fonts). Every layout renders under every theme; generated text auto-picks a
+legible ink for whatever color it lands on. `npx tsx examples/showcase.ts`
+emits a deck of all themes × layouts and runs it through the validator.
 
 ## Honest limitations
 - **Editable ≠ pixel-identical.** PowerPoint reflows text with its own engine, so a

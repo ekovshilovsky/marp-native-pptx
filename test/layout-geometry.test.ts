@@ -51,8 +51,10 @@ describe('layout geometry contract', () => {
     expect(digits.length).toBe(3)
     for (const d of digits) {
       const dc = center(d)
-      const match = circles.find((c) => Math.abs(center(c).x - dc.x) < 1 && Math.abs(center(c).y - dc.y) < 1)
-      expect(match, `digit at ${dc.x},${dc.y} concentric with a node`).toBeDefined()
+      // horizontally concentric; vertically within a small optical nudge (the
+      // digit box is shifted down a few px so the glyph seats in the circle)
+      const match = circles.find((c) => Math.abs(center(c).x - dc.x) < 1 && Math.abs(center(c).y - dc.y) <= c.rect.hPx * 0.12)
+      expect(match, `digit at ${dc.x},${dc.y} seated in a node`).toBeDefined()
     }
   })
 

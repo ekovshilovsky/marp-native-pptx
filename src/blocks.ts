@@ -282,8 +282,11 @@ export function layoutDeck(deck: Deck): SlideLayout[] {
       let top = TITLE_TOP
       const lead = (slide.blocks ?? []).filter((b) => b.type === 'heading' || b.type === 'kicker')
       if (lead.length) {
-        boxes.push(...stack(lead, M, TITLE_TOP, W - 2 * M, theme))
-        top = TITLE_TOP + 120
+        const leadBoxes = stack(lead, M, TITLE_TOP, W - 2 * M, theme)
+        boxes.push(...leadBoxes)
+        // start the columns BELOW the actual lead (incl. the title's accent rule),
+        // not at a fixed offset that can collide with the left column heading.
+        top = Math.max(...leadBoxes.map((b) => b.rect.yPx + b.rect.hPx)) + 44
       }
       cols.forEach((col, i) => {
         boxes.push(...stack(col, M + i * (colW + 60), top, colW, theme))
@@ -501,11 +504,12 @@ export function layoutDeck(deck: Deck): SlideLayout[] {
           const cx = xs[i]
           const c = theme.palette[i % theme.palette.length]
           boxes.push({ kind: 'shape', preset: 'ellipse', rect: { xPx: cx - node / 2, yPx: railY - node / 2, wPx: node, hPx: node }, fill: c })
+          // A digit has no descender, so valign-middle parks it above the optical
+          // center; nudge the box down ~6% of the node to seat it in the circle.
+          const numNudge = Math.round(node * 0.06)
           boxes.push({
             kind: 'text',
-            // line spacing >= font size + valign middle centers the single glyph
-            // in the circle (a tighter spacing biases the glyph upward).
-            rect: { xPx: cx - node / 2, yPx: railY - node / 2, wPx: node, hPx: node },
+            rect: { xPx: cx - node / 2, yPx: railY - node / 2 + numNudge, wPx: node, hPx: node },
             valign: 'middle',
             paras: [paragraph(toRuns(String(i + 1), theme, 22, readableOn(c)).map((r) => ({ ...r, style: { ...r.style, bold: true } })), 'center', 22)],
           })
